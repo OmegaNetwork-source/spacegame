@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Space Escape</title>
+  <style>
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      width: 100vw;
+      height: 100vh;
+      background: radial-gradient(ellipse at center, #181830 0%, #050510 100%);
+      color: #90f9ff;
+      font-family: 'Orbitron', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+    .title {
+      text-align: center;
+      font-size: 3em;
+      letter-spacing: 0.1em;
+      margin-top: 60px;
+      text-shadow: 0 0 20px #08f, 0 0 40px #fff8;
+      font-weight: bold;
+    }
+    .subtitle {
+      text-align: center;
+      font-size: 1.5em;
+      color: #a0e0ff;
+      margin-bottom: 40px;
+      text-shadow: 0 0 10px #070e22;
+    }
+    .ship-select {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 30px;
+      margin: 0 auto 40px auto;
+      max-width: 900px;
+    }
+    .ship {
+      background: none;
+      border: none;
+      border-radius: 0;
+      padding: 0;
+      box-shadow: none;
+      cursor: pointer;
+      transition: none;
+      position: relative;
+    }
+    .ship img {
+      width: 70px;
+      height: 70px;
+      object-fit: contain;
+      filter: none;
+      pointer-events: none;
+      background: none;
+      border-radius: 0;
+    }
+    .ship.selected {
+      border: 2.5px solid #6ffeff;
+      box-shadow: 0 0 32px #91e6ff, 0 0 8px #fffbb7c7;
+      transform: scale(1.11);
+      z-index: 2;
+    }
+    .ship:hover {
+      /* No hover styling at all */
+    }
+    .play-btn {
+      display: block;
+      margin: 40px auto 0 auto;
+      background: linear-gradient(90deg, #25caff 40%, #ccfe55 100%);
+      color: #18313a;
+      font-family: 'Orbitron', Arial, sans-serif;
+      font-size: 1.5em;
+      font-weight: 900;
+      padding: 16px 56px;
+      border-radius: 14px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 0 24px #80faff70, 0 0 4px #faffabcc;
+      transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+      outline: none;
+    }
+    .play-btn:active {
+      transform: scale(0.97);
+      box-shadow: 0 0 10px #83ffd9bb;
+    }
+    #gameCanvas {
+      position: absolute;
+      left: 0; top: 0;
+      width: 100vw; height: 100vh;
+      margin: 0; border: none; z-index: 10;
+      box-shadow: none; background: none; display:none;
+    }
+    .menu {
+      width: 90%;
+      max-width: 1100px;
+      background: #151536cc;
+      border-radius: 28px;
+      box-shadow: 0 0 66px 0 #0ff8, 0 0 6px 2px #90f8ff44;
+      padding: 38px 8px 22px 8px;
+      border: 1.5px solid #49f3fb55;
+      z-index: 15;
+      margin: 0;
+      /* Remove margin-top to allow centering via flexbox */
+    }
+    .title, .subtitle, .ship-select, .play-btn { position: relative; z-index: 20; }
+  </style>
+  <link href="https://fonts.googleapis.com/css?family=Orbitron:700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="menu">
+    <div class="title">SPACE ESCAPE</div>
+    <div class="subtitle">Select Your Spaceship</div>
+    <div class="ship-select" id="shipSelect">
+      <div class="ship"><img src="assets/ship1redone.png" alt="Ship 1"></div>
+      <div class="ship"><img src="assets/8.png" alt="Ship 8"></div>
+      <div class="ship"><img src="assets/9.png" alt="Ship 9"></div>
+    </div>
+    <button id="playBtn" class="play-btn" style="display:none">PLAY</button>
+  </div>
+  <canvas id="gameCanvas"></canvas>
+  <!-- Speaker Toggle Icon -->
+  <div id="speakerToggle" style="position: absolute; top: 32px; right: 38px; z-index: 300; cursor:pointer">
+    <svg id="speakerIconOn" width="38" height="38" viewBox="0 0 38 38" fill="none" style="display:block"><rect x="0" y="0" width="38" height="38" rx="19" fill="#233445"/><path d="M10 24h5l6 4V10l-6 4h-5v10Z" fill="#a6fcff" stroke="#72d9e9" stroke-width="2.5"/><path d="M26 14c1.7 2.1 1.7 7.9 0 10" stroke="#78fcff" stroke-width="2.5"/><path d="M30 11c3.29 4.35 3.29 13.65 0 18" stroke="#78fcff" stroke-width="2.5"/></svg>
+    <svg id="speakerIconOff" width="38" height="38" viewBox="0 0 38 38" fill="none" style="display:none"><rect x="0" y="0" width="38" height="38" rx="19" fill="#224"/><path d="M10 24h5l6 4V10l-6 4h-5v10Z" fill="#bbb" stroke="#8888aa" stroke-width="2.5"/><path d="M30 11l-13 16M30 27L17 11" stroke="#e5556a" stroke-width="2.5"/></svg>
+  </div>
+  <!-- Audio files (replace URLs with your own for custom fx) -->
+  <audio id="sfxLaser" src="https://cdn.pixabay.com/audio/2022/09/27/audio_12c3c5b256.mp3" preload="auto"></audio>
+  <audio id="sfxExplosion" src="https://cdn.pixabay.com/audio/2022/03/15/audio_121b1c8dcb.mp3" preload="auto"></audio>
+  <script>
+    let muted = false;
+    const speakerToggle = document.getElementById('speakerToggle');
+    const iconOn = document.getElementById('speakerIconOn');
+    const iconOff = document.getElementById('speakerIconOff');
+    speakerToggle.onclick = function() {
+      muted = !muted;
+      iconOn.style.display = muted ? 'none' : 'block';
+      iconOff.style.display = muted ? 'block' : 'none';
+    };
+    function playSound(id) {
+      if (muted) return;
+      let el = document.getElementById(id);
+      if (el) { el.currentTime = 0; el.play(); }
+    }
+    // --- Menu Ship Selection ---
+    const ships = document.querySelectorAll('.ship');
+    const playBtn = document.getElementById('playBtn');
+    let selectedShipImg = '';
+    ships.forEach((ship) => {
+      ship.addEventListener('click', () => {
+        ships.forEach(s => s.classList.remove('selected'));
+        ship.classList.add('selected');
+        const imgElem = ship.querySelector('img');
+        selectedShipImg = imgElem.getAttribute('src');
+        playBtn.style.display = 'block';
+      });
+    });
+    playBtn.addEventListener('click', () => {
+      document.querySelector('.menu').style.display = 'none';
+      const gameCanvas = document.getElementById('gameCanvas');
+      gameCanvas.style.display = 'block';
+      startGame(selectedShipImg);
+    });
+
+    // ---- SPACE ESCAPE GAME CORE ----
+    function startGame(shipImgSrc) {
+      const canvas = document.getElementById('gameCanvas');
+      // --- Responsive canvas ---
+      function resize() {
+        // Maintain 16:9 or fill window if smaller
+        const w = window.innerWidth, h = window.innerHeight;
+        let arw = w, arh = h;
+        if(w/h > 16/9) arw = h*16/9;
+        else arh = w*9/16;
+        canvas.width = arw; canvas.height = arh;
+        canvas.style.width = w+'px';
+        canvas.style.height = h+'px';
+      }
+      window.addEventListener('resize', resize);
+      resize();
+      const ctx = canvas.getContext('2d');
+      const shipImg = new Image();
+      shipImg.src = shipImgSrc;
+
+      // Player ship state
+      let player = {
+        x: canvas.width/2,
+        y: canvas.height-100,
+        w: 66,
+        h: 66,
+        speed: 7,
+        img: shipImg,
+      };
+      let score = 0;
+      let gameOver = false;
+      let timeStart = Date.now();
+      let timeSurvived = 0;
+      let level = 1;
+      let nextLevelTime = 60000; // 1 minute in ms
+
+      // Keyboard input
+      let keys = {};
+      document.addEventListener('keydown', e => { keys[e.code] = true; });
+      document.addEventListener('keyup', e => { keys[e.code] = false; });
+
+      // Initialize enemy state before spawner logic
+      const enemyImg = new Image();
+      enemyImg.src = 'assets/evil.png';
+      enemyImg.onerror = () => { console.error('Could not load enemy image at: assets/evil.png'); };
+      let enemies = [];
+
+      // Lasers
+      let lasers = [];
+      let canShoot = true;
+      let shootInterval;
+      function shoot() {
+        if (canShoot) {
+          lasers.push({
+            x: player.x,
+            y: player.y - 40,
+            w: 5,
+            h: 20,
+            color: '#fffd30',
+          });
+          canShoot = false;
+          shootInterval = setTimeout(() => canShoot = true, 120);
+          playSound('sfxLaser');
+        }
+      }
+
+      // Enemies - use adjustable speed/spawn for scaling
+      let enemySpeed = 1.8;
+      let enemySpawnRate = 1200;
+      let enemySpawnInt;
+      function spawnEnemy() {
+        enemies.push({
+          x: Math.random() * (canvas.width-46) + 23,
+          y: -40,
+          w: 50,
+          h: 50,
+          vy: enemySpeed + Math.random()*0.8,
+          alive: true
+        });
+      }
+      // Enemy spawner: always clear interval first, even if not set
+      function setEnemySpawner() {
+        if (enemySpawnInt) { clearInterval(enemySpawnInt); enemySpawnInt = null; }
+        enemySpawnInt = setInterval(spawnEnemy, enemySpawnRate);
+      }
+      setEnemySpawner();
+
+      // Space debris/asteroids/comets
+      let hazards = [];
+      // Hazards - use adjustable speed/spawn for scaling
+      let hazardSpeed = 2.2;
+      let hazardSpawnRate = 1100;
+      let hazardSpawnInt;
+      function spawnHazard() {
+        const type = Math.random();
+        let speedAdj = hazardSpeed + Math.random();
+        if (type < 1/3) {
+          // Comet
+          hazards.push({ x: Math.random()*canvas.width, y: -24, r: 28+Math.random()*12, vy: speedAdj+0.9, comet: true });
+        } else if (type < 2/3) {
+          // Satellite
+          hazards.push({ x: Math.random()*canvas.width, y: -24, r: 35+Math.random()*16, vy: speedAdj+0.7, sat: true });
+        } else {
+          // Alien
+          let rotInit = Math.random() * Math.PI * 2;
+          let rotSpeed = 0.015 + Math.random() * 0.008;
+          hazards.push({ x: Math.random()*canvas.width, y: -28, r: 32+Math.random()*17, vy: speedAdj+0.5, alien: true, rot: rotInit, rotSpeed });
+        }
+      }
+      // Hazards
+      function setHazardSpawner() {
+        if (hazardSpawnInt) { clearInterval(hazardSpawnInt); hazardSpawnInt = null; }
+        hazardSpawnInt = setInterval(spawnHazard, hazardSpawnRate);
+      }
+      setHazardSpawner();
+
+      // Star field for scrolling effect
+      let stars = Array.from({length: 48}, () => ({
+        x: Math.random()*canvas.width,
+        y: Math.random()*canvas.height,
+        r: Math.random()*2+0.5,
+        v: Math.random()*1+0.2
+      }));
+      function drawStars() {
+        ctx.save();
+        ctx.globalAlpha = 0.75;
+        ctx.fillStyle = '#bfffff';
+        for (let s of stars) {
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+          ctx.fill();
+          s.y += s.v;
+          if (s.y > canvas.height) { s.y = 0; s.x = Math.random()*canvas.width; }
+        }
+        ctx.restore();
+      }
+
+      function isColliding(a, b) {
+        return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y;
+      }
+      function isCircleShipColliding(circle, ship) {
+        // Ship = rect. Closest point
+        let rx = Math.max(ship.x-ship.w/2, Math.min(circle.x, ship.x+ship.w/2));
+        let ry = Math.max(ship.y-ship.h/2, Math.min(circle.y, ship.y+ship.h/2));
+        let dx = circle.x - rx, dy = circle.y - ry;
+        return (dx*dx + dy*dy) <= circle.r*circle.r;
+      }
+
+      function showGameOver() {
+        ctx.save();
+        ctx.globalAlpha = 0.92;
+        ctx.fillStyle = '#070920cc';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.globalAlpha = 1;
+        ctx.font = 'bold 3em Orbitron, Arial';
+        ctx.fillStyle = '#fffc7e';
+        ctx.textAlign = 'center';
+        ctx.fillText('GAME OVER', canvas.width/2, canvas.height/2-32);
+        ctx.font = '1.6em Orbitron, Arial';
+        ctx.fillStyle = '#b8e0ff';
+        ctx.fillText('Time Survived: '+timeSurvived.toFixed(1)+'s', canvas.width/2, canvas.height/2+22);
+        ctx.font = '1.1em Orbitron, Arial';
+        ctx.fillStyle = '#fff';
+        ctx.fillText('Level: '+level, canvas.width/2, canvas.height/2+54);
+        ctx.fillText('Click to Play Again', canvas.width/2, canvas.height/2+92);
+        ctx.restore();
+        canvas.addEventListener('click', restart, {once: true});
+      }
+      function restart() {window.location.reload();}
+
+      let explosions = []; // {x, y, start, duration}
+
+      function gameLoop() {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        drawStars();
+        // Score/Time/Level display
+        timeSurvived = (Date.now()-timeStart)/1000;
+        ctx.save();
+        ctx.font = '1.22em Orbitron, Arial';
+        ctx.fillStyle = '#cfffff';
+        ctx.textAlign = 'left';
+        ctx.fillText('Time Survived: '+timeSurvived.toFixed(1)+'s', 28, 44);
+        ctx.fillText('Level: '+level, 28, 72);
+        ctx.restore();
+        // Difficulty scaling
+        if (timeSurvived*1000 > level*nextLevelTime) {
+          level++;
+          enemySpeed += 0.58;
+          hazardSpeed += 0.51;
+          enemySpawnRate = Math.max(340, enemySpawnRate-160);
+          hazardSpawnRate = Math.max(280, hazardSpawnRate-100);
+          setEnemySpawner();
+          setHazardSpawner();
+        }
+        // Clamp movement so ship cannot leave visible area
+        if (keys['ArrowLeft']) player.x = Math.max(player.x - player.speed, player.w/2);
+        if (keys['ArrowRight']) player.x = Math.min(player.x + player.speed, canvas.width - player.w/2);
+        if (keys['ArrowUp']) player.y = Math.max(player.y - player.speed, player.h/2);
+        if (keys['ArrowDown']) player.y = Math.min(player.y + player.speed, canvas.height - player.h/2);
+        if (keys['Space']) shoot();
+        ctx.drawImage(player.img, player.x-player.w/2, player.y-player.h/2, player.w, player.h);
+        // Lasers
+        ctx.save();
+        for (let laser of lasers) ctx.fillStyle = laser.color, ctx.fillRect(laser.x-2, laser.y, laser.w, laser.h);
+        ctx.restore();
+        lasers = lasers.filter(l => l.y > -24); for(let laser of lasers){ laser.y -= 11; }
+        // Enemies
+        for (let enemy of enemies) {
+          if (!enemy.alive) continue;
+          ctx.drawImage(enemyImg, enemy.x-enemy.w/2, enemy.y-enemy.h/2, enemy.w, enemy.h);
+          enemy.y += enemy.vy;
+          if(isColliding(
+            {x: player.x-player.w/2, y: player.y-player.h/2, w: player.w, h: player.h},
+            {x: enemy.x-enemy.w/2, y: enemy.y-enemy.h/2, w: enemy.w, h: enemy.h}
+          )) { gameOver = true; }
+        }
+        // Lasers hit enemy ships
+        for (let laser of lasers) { for (let enemy of enemies) {
+            if (!enemy.alive) continue;
+            let enemyRect = {x: enemy.x-enemy.w/2, y: enemy.y-enemy.h/2, w: enemy.w, h: enemy.h};
+            let laserRect = {x: laser.x-2, y: laser.y, w: laser.w, h: laser.h};
+            if (isColliding(laserRect, enemyRect)) {
+              // Explosion on hit
+              explosions.push({x: enemy.x, y: enemy.y, start: performance.now(), duration: 350});
+              enemy.alive = false;
+              laser.y = -100;
+              playSound('sfxExplosion');
+            }
+        }}
+        enemies = enemies.filter(e => e.y < canvas.height+22 && e.alive);
+        // Hazards
+        for(let debris of hazards) {
+          if(debris.comet && cometImg.complete && cometImg.naturalWidth > 0) {
+            ctx.save();
+            ctx.globalAlpha = 0.97;
+            ctx.drawImage(cometImg, debris.x-debris.r, debris.y-debris.r, debris.r*2, debris.r*2);
+            ctx.restore();
+          } else if(debris.sat && satImg.complete && satImg.naturalWidth > 0) {
+            ctx.save();
+            ctx.globalAlpha = 0.98;
+            ctx.drawImage(satImg, debris.x-debris.r, debris.y-debris.r, debris.r*2, debris.r*2);
+            ctx.restore();
+          } else if(debris.alien && alienImg.complete && alienImg.naturalWidth > 0) {
+            ctx.save();
+            ctx.globalAlpha = 0.97;
+            ctx.translate(debris.x, debris.y);
+            ctx.rotate(debris.rot);
+            ctx.drawImage(alienImg, -debris.r, -debris.r, debris.r*2, debris.r*2);
+            ctx.restore();
+            debris.rot += debris.rotSpeed;
+          } else if(debris.comet) {
+            ctx.save();
+            ctx.globalAlpha = 0.77;
+            ctx.strokeStyle = '#fff';
+            ctx.beginPath(); ctx.arc(debris.x, debris.y, debris.r, 0, Math.PI*2); ctx.fillStyle='#c0f6ff'; ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+          } else if(debris.sat) {
+            ctx.save();
+            ctx.globalAlpha = 0.85;
+            ctx.beginPath();
+            ctx.arc(debris.x, debris.y, debris.r, 0, Math.PI*2);
+            ctx.fillStyle = '#b88cff';
+            ctx.fill();
+            ctx.restore();
+          } else if(debris.alien) {
+            ctx.save();
+            ctx.globalAlpha = 0.8;
+            ctx.beginPath();
+            ctx.arc(debris.x, debris.y, debris.r, 0, Math.PI*2);
+            ctx.fillStyle = '#88ffaa';
+            ctx.fill();
+            ctx.restore();
+            debris.rot += debris.rotSpeed;
+          }
+          debris.y += debris.vy;
+          if(isCircleShipColliding(debris, player)) gameOver = true;
+        }
+        hazards = hazards.filter(hz => hz.y < canvas.height+60);
+        // Draw explosions LAST so they're on top
+        let now = performance.now();
+        for (let i = explosions.length - 1; i >= 0; --i) {
+          let ex = explosions[i];
+          let t = (now - ex.start) / ex.duration;
+          if (t > 1) { explosions.splice(i, 1); continue; }
+          let r1 = 14 + 20 * (1-t), r2 = 6 + 8*(1-t);
+          ctx.save();
+          ctx.globalAlpha = 0.6 * (1-t);
+          ctx.beginPath(); ctx.arc(ex.x, ex.y, r1, 0, Math.PI*2);
+          ctx.fillStyle = 'orange'; ctx.fill();
+          ctx.beginPath(); ctx.arc(ex.x, ex.y, r2, 0, Math.PI*2);
+          ctx.fillStyle = 'yellow'; ctx.fill();
+          ctx.globalAlpha = 0.22 * (1-t);
+          ctx.beginPath(); ctx.arc(ex.x, ex.y, r1*2, 0, Math.PI*2);
+          ctx.fillStyle = 'red'; ctx.fill();
+          ctx.restore();
+        }
+        if (gameOver) { showGameOver(); return; }
+        requestAnimationFrame(gameLoop);
+      }
+      const cometImg = new Image();
+      cometImg.src = 'assets/commet.png';
+      cometImg.onerror = () => { console.error('Could not load comet image at: assets/commet.png'); };
+      const satImg = new Image();
+      satImg.src = 'assets/sat.png';
+      satImg.onerror = () => { console.error('Could not load satellite image at: assets/sat.png'); };
+      const alienImg = new Image();
+      alienImg.src = 'assets/alien.png';
+      alienImg.onerror = () => { console.error('Could not load alien image at: assets/alien.png'); };
+      shipImg.onload = () => { gameLoop(); };
+    }
+  </script>
+</body>
+</html>
