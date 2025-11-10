@@ -101,6 +101,56 @@
       margin: 0; border: none; z-index: 10;
       box-shadow: none; background: none; display:none;
     }
+    #gameOverOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 6, 15, 0.86);
+      z-index: 900;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+    #gameOverOverlay .panel {
+      text-align: center;
+      padding: 32px 40px;
+      border-radius: 24px;
+      background: rgba(13,24,48,0.95);
+      border: 1.5px solid #5bf4ff80;
+      box-shadow: 0 0 44px #5ffaff82;
+      color: #d0faff;
+      min-width: 280px;
+    }
+    #gameOverOverlay .panel h2 {
+      margin: 0 0 12px 0;
+      font-size: 2.4em;
+      color: #ffe05b;
+    }
+    #gameOverOverlay .panel .stat {
+      font-size: 1.25em;
+      margin-bottom: 12px;
+    }
+    #goSubmitBtn,
+    #goConnectBtn,
+    #goPlayAgainBtn {
+      display: block;
+      width: 100%;
+      margin-top: 14px;
+      font-size: 1.05em;
+      background: linear-gradient(90deg, #25caff 40%, #ccfe55 100%);
+      color: #122838;
+      border: none;
+      border-radius: 14px;
+      padding: 14px;
+      cursor: pointer;
+      font-family: 'Orbitron', Arial, sans-serif;
+      font-weight: 700;
+      box-shadow: 0 0 16px #7ef7ff6b;
+    }
+    #goPlayAgainBtn {
+      background: linear-gradient(90deg, #ffe55b 20%, #ffaf3d 100%);
+      color: #2a1c00;
+    }
     .menu {
       width: 90%;
       max-width: 1100px;
@@ -114,6 +164,60 @@
       /* Remove margin-top to allow centering via flexbox */
     }
     .title, .subtitle, .ship-select, .play-btn { position: relative; z-index: 20; }
+    #leaderboardOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 6, 15, 0.88);
+      z-index: 850;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(3px);
+    }
+    #leaderboardOverlay .panel {
+      background: rgba(12, 26, 52, 0.96);
+      border-radius: 24px;
+      padding: 28px 36px;
+      border: 1.5px solid #64f3ff80;
+      box-shadow: 0 0 42px #5bf6ff77;
+      color: #d9f9ff;
+      min-width: 320px;
+      max-height: 70vh;
+      overflow-y: auto;
+      text-align: center;
+    }
+    #leaderboardOverlay h2 {
+      margin: 0 0 14px 0;
+      color: #ffe05b;
+      font-size: 2em;
+    }
+    #leaderboardList {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    #leaderboardList li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #3a536b;
+      font-family: 'Orbitron', Arial, sans-serif;
+      font-size: 0.95em;
+    }
+    #leaderboardClose {
+      margin-top: 18px;
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-family: 'Orbitron', Arial, sans-serif;
+      font-weight: 600;
+      background: linear-gradient(90deg, #ff8c5b 0%, #ffd05b 100%);
+      color: #1d1302;
+      box-shadow: 0 0 18px #ffdf8a63;
+    }
   </style>
   <link href="https://fonts.googleapis.com/css?family=Orbitron:700&display=swap" rel="stylesheet">
 </head>
@@ -126,9 +230,29 @@
       <div class="ship"><img src="assets/8.png" alt="Ship 8"></div>
       <div class="ship"><img src="assets/9.png" alt="Ship 9"></div>
     </div>
-    <button id="playBtn" class="play-btn" style="display:none">PLAY</button>
+    <button id="connectWalletBtn" class="play-btn" style="margin-bottom:18px;">CONNECT METAMASK</button>
+    <div id="walletStatus" style="text-align:center;font-size:1.05em;color:#9cf;padding-bottom:10px;display:none"></div>
+    <button id="leaderboardBtn" class="play-btn" style="margin-top:0;margin-bottom:12px;">LEADERBOARD</button>
+    <button id="playBtn" class="play-btn" style="display:none;opacity:0.45;pointer-events:none;">PLAY</button>
   </div>
   <canvas id="gameCanvas"></canvas>
+  <div id="gameOverOverlay">
+    <div class="panel">
+      <h2>GAME OVER</h2>
+      <div class="stat">Time Survived: <span id="goTime">0.0s</span></div>
+      <div class="stat">Level: <span id="goLevel">1</span></div>
+      <button id="goConnectBtn">Connect Wallet to Submit</button>
+      <button id="goSubmitBtn">Submit Score</button>
+      <button id="goPlayAgainBtn">Play Again</button>
+    </div>
+  </div>
+  <div id="leaderboardOverlay">
+    <div class="panel">
+      <h2>Top Pilots</h2>
+      <ul id="leaderboardList"></ul>
+      <button id="leaderboardClose">Close</button>
+    </div>
+  </div>
   <!-- Speaker Toggle Icon -->
   <div id="speakerToggle" style="position: absolute; top: 32px; right: 38px; z-index: 300; cursor:pointer">
     <svg id="speakerIconOn" width="38" height="38" viewBox="0 0 38 38" fill="none" style="display:block"><rect x="0" y="0" width="38" height="38" rx="19" fill="#233445"/><path d="M10 24h5l6 4V10l-6 4h-5v10Z" fill="#a6fcff" stroke="#72d9e9" stroke-width="2.5"/><path d="M26 14c1.7 2.1 1.7 7.9 0 10" stroke="#78fcff" stroke-width="2.5"/><path d="M30 11c3.29 4.35 3.29 13.65 0 18" stroke="#78fcff" stroke-width="2.5"/></svg>
@@ -137,6 +261,7 @@
   <!-- Audio files (replace URLs with your own for custom fx) -->
   <audio id="sfxLaser" src="https://cdn.pixabay.com/audio/2022/09/27/audio_12c3c5b256.mp3" preload="auto"></audio>
   <audio id="sfxExplosion" src="https://cdn.pixabay.com/audio/2022/03/15/audio_121b1c8dcb.mp3" preload="auto"></audio>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
   <script>
     let muted = false;
     const speakerToggle = document.getElementById('speakerToggle');
@@ -169,11 +294,138 @@
       document.querySelector('.menu').style.display = 'none';
       const gameCanvas = document.getElementById('gameCanvas');
       gameCanvas.style.display = 'block';
+      currentShipImg = selectedShipImg;
       startGame(selectedShipImg);
+    });
+
+    let userAddress = null;
+    const connectBtn = document.getElementById('connectWalletBtn');
+    const walletStatus = document.getElementById('walletStatus');
+    // MetaMask connect logic
+    async function connectWallet() {
+      console.log('[Wallet] connectWallet called');
+      if (!window.ethereum) {
+        walletStatus.innerText = 'MetaMask not detected. Please install MetaMask.';
+        walletStatus.style.display = 'block';
+        connectBtn.style.display = 'block';
+        if (goConnectBtn) {
+          goConnectBtn.disabled = false;
+          goConnectBtn.innerText = 'MetaMask Required';
+        }
+        updateOverlayButtons();
+        return;
+      }
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        console.log('[Wallet] Accounts returned:', accounts);
+        userAddress = accounts[0];
+        walletStatus.innerText = 'Connected: ' + userAddress.substring(0,6) + '...' + userAddress.substring(userAddress.length-4);
+        walletStatus.style.display = 'block';
+        connectBtn.style.display = 'none';
+        playBtn.style.opacity = '1';
+        playBtn.style.pointerEvents = 'auto';
+        await getContract();
+      } catch (err) {
+        console.warn('[Wallet] Connection rejected or failed:', err);
+        walletStatus.innerText = err && err.message ? err.message : 'Connection rejected.';
+        walletStatus.style.display = 'block';
+      } finally {
+        if (goConnectBtn) {
+          goConnectBtn.disabled = false;
+          goConnectBtn.innerText = 'Connect Wallet to Submit';
+        }
+        updateOverlayButtons();
+      }
+    }
+    // --- Smart contract integration ---
+    const CONTRACT_ADDRESS = "0x4ea34737f049214ea1cefe0212da2dfd6bcccfbc";
+    const CONTRACT_ABI = [
+      {
+        "anonymous": false,
+        "inputs": [
+          {"indexed": true, "internalType": "address", "name": "player", "type": "address"},
+          {"indexed": false, "internalType": "uint256", "name": "centiSeconds", "type": "uint256"}
+        ],
+        "name": "NewHighScore",
+        "type": "event"
+      },
+      {"inputs": [{"internalType": "uint256", "name": "centiSeconds", "type": "uint256"}], "name": "submitScore", "outputs": [], "stateMutability": "nonpayable", "type": "function"},
+      {"inputs": [{"internalType": "address", "name": "", "type": "address"}], "name": "bestScore", "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}], "stateMutability": "view", "type": "function"},
+      {"inputs": [], "name": "getAllBestScores", "outputs": [ {"internalType": "address[]","name": "","type": "address[]"}, {"internalType": "uint256[]","name": "","type": "uint256[]"} ], "stateMutability": "view", "type": "function" },
+      {"inputs": [{"internalType": "uint256","name": "","type": "uint256"}], "name": "leaderboardPlayers", "outputs": [{"internalType": "address", "name": "", "type": "address"}], "stateMutability": "view", "type": "function"}
+    ];
+    const SOMNIA_PARAMS = {
+      chainId: '0x13A7',
+      chainName: 'Somnia Mainnet',
+      nativeCurrency: {
+        name: 'Somnia',
+        symbol: 'SOMI',
+        decimals: 18
+      },
+      rpcUrls: ['https://api.infra.mainnet.somnia.network/'],
+      blockExplorerUrls: ['https://explorer.somnia.network']
+    };
+    let contractInstance = null, provider = null;
+    let lastGameOverScore = 0;
+    let readonlyProvider = new ethers.providers.JsonRpcProvider(SOMNIA_PARAMS.rpcUrls[0]);
+    let currentShipImg = null;
+    let cleanupCurrentGame = null;
+
+    async function ensureSomniaNetwork() {
+      if (!window.ethereum) throw new Error('MetaMask required');
+      const currentChain = await window.ethereum.request({ method: 'eth_chainId' });
+      if (currentChain === SOMNIA_PARAMS.chainId) return;
+      try {
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: SOMNIA_PARAMS.chainId }]
+        });
+      } catch (switchError) {
+        if (switchError.code === 4902) {
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [SOMNIA_PARAMS]
+          });
+        } else {
+          throw switchError;
+        }
+      }
+    }
+    async function getContract() {
+      if (!window.ethereum) throw new Error('MetaMask required');
+      await ensureSomniaNetwork();
+      provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+      contractInstance = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+    }
+    connectBtn.onclick = async function() {
+      await connectWallet();
+      if (userAddress) await getContract();
+    };
+    // On page load, try autoconnect if already authorized
+    window.addEventListener('DOMContentLoaded', async ()=> {
+      if (window.ethereum && window.ethereum.selectedAddress) {
+        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+        if (accounts[0]) {
+          userAddress = accounts[0];
+          walletStatus.innerText = 'Connected: ' + userAddress.substring(0,6) + '...' + userAddress.substring(userAddress.length-4);
+          walletStatus.style.display = 'block';
+          connectBtn.style.display = 'none';
+          playBtn.style.opacity = '1';
+          playBtn.style.pointerEvents = 'auto';
+          await getContract();
+          updateOverlayButtons();
+        }
+      }
     });
 
     // ---- SPACE ESCAPE GAME CORE ----
     function startGame(shipImgSrc) {
+      if (!shipImgSrc) return;
+      currentShipImg = shipImgSrc;
+      if (cleanupCurrentGame) {
+        cleanupCurrentGame();
+      }
       const canvas = document.getElementById('gameCanvas');
       // --- Responsive canvas ---
       function resize() {
@@ -191,6 +443,10 @@
       const ctx = canvas.getContext('2d');
       const shipImg = new Image();
       shipImg.src = shipImgSrc;
+
+      let enemySpawnInt;
+      let hazardSpawnInt;
+      let keyHandlers = { down: null, up: null };
 
       // Player ship state
       let player = {
@@ -210,8 +466,10 @@
 
       // Keyboard input
       let keys = {};
-      document.addEventListener('keydown', e => { keys[e.code] = true; });
-      document.addEventListener('keyup', e => { keys[e.code] = false; });
+      keyHandlers.down = e => { keys[e.code] = true; };
+      keyHandlers.up = e => { keys[e.code] = false; };
+      document.addEventListener('keydown', keyHandlers.down);
+      document.addEventListener('keyup', keyHandlers.up);
 
       // Initialize enemy state before spawner logic
       const enemyImg = new Image();
@@ -241,7 +499,6 @@
       // Enemies - use adjustable speed/spawn for scaling
       let enemySpeed = 1.8;
       let enemySpawnRate = 1200;
-      let enemySpawnInt;
       function spawnEnemy() {
         enemies.push({
           x: Math.random() * (canvas.width-46) + 23,
@@ -264,7 +521,6 @@
       // Hazards - use adjustable speed/spawn for scaling
       let hazardSpeed = 2.2;
       let hazardSpawnRate = 1100;
-      let hazardSpawnInt;
       function spawnHazard() {
         const type = Math.random();
         let speedAdj = hazardSpeed + Math.random();
@@ -319,26 +575,52 @@
         let dx = circle.x - rx, dy = circle.y - ry;
         return (dx*dx + dy*dy) <= circle.r*circle.r;
       }
+      function isRectCircleColliding(rect, circle) {
+        // rect: {x, y, w, h}; circle: {x, y, r}
+        let rx = Math.max(rect.x, Math.min(circle.x, rect.x+rect.w));
+        let ry = Math.max(rect.y, Math.min(circle.y, rect.y+rect.h));
+        let dx = circle.x - rx, dy = circle.y - ry;
+        return (dx*dx + dy*dy) <= (circle.r+2)*(circle.r+2); // +2 "padding" for generosity
+      }
 
+      // Hold game over score globally to use in button
+      // Helper: always get latest connected account
+      async function getMetaMaskAccount() {
+        if (!window.ethereum) return null;
+        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+        return accounts && accounts[0] ? accounts[0] : null;
+      }
+      // Listen for account change
+      if (window.ethereum) {
+        window.ethereum.on('accountsChanged', async function(accounts) {
+          userAddress = accounts[0] || null;
+          if (userAddress) await getContract();
+        });
+      }
+      // Utility to remove submit button always
+      function removeSubmitButton() {
+        let btn=document.getElementById('submitScoreBtn');
+        if(btn) btn.remove();
+      }
+      // Utility to remove both buttons
+      function removeGameOverButtons() {
+        let b1 = document.getElementById('submitScoreBtn');
+        let b2 = document.getElementById('connectWalletBtnGo');
+        if(b1) b1.remove();
+        if(b2) b2.remove();
+      }
+      // Update showGameOver for clean logic
       function showGameOver() {
-        ctx.save();
-        ctx.globalAlpha = 0.92;
-        ctx.fillStyle = '#070920cc';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.globalAlpha = 1;
-        ctx.font = 'bold 3em Orbitron, Arial';
-        ctx.fillStyle = '#fffc7e';
-        ctx.textAlign = 'center';
-        ctx.fillText('GAME OVER', canvas.width/2, canvas.height/2-32);
-        ctx.font = '1.6em Orbitron, Arial';
-        ctx.fillStyle = '#b8e0ff';
-        ctx.fillText('Time Survived: '+timeSurvived.toFixed(1)+'s', canvas.width/2, canvas.height/2+22);
-        ctx.font = '1.1em Orbitron, Arial';
-        ctx.fillStyle = '#fff';
-        ctx.fillText('Level: '+level, canvas.width/2, canvas.height/2+54);
-        ctx.fillText('Click to Play Again', canvas.width/2, canvas.height/2+92);
-        ctx.restore();
-        canvas.addEventListener('click', restart, {once: true});
+        console.log('[GameOver] Display overlay with score', timeSurvived, 'level', level);
+        if (cleanupCurrentGame) {
+          cleanupCurrentGame();
+          cleanupCurrentGame = null;
+        }
+        lastGameOverScore = timeSurvived;
+        goTime.innerText = timeSurvived.toFixed(1)+'s';
+        goLevel.innerText = level;
+        updateOverlayButtons();
+        goOverlay.style.display = 'flex';
       }
       function restart() {window.location.reload();}
 
@@ -402,55 +684,23 @@
             }
         }}
         enemies = enemies.filter(e => e.y < canvas.height+22 && e.alive);
-        // Hazards
-        for(let debris of hazards) {
-          if(debris.comet && cometImg.complete && cometImg.naturalWidth > 0) {
-            ctx.save();
-            ctx.globalAlpha = 0.97;
-            ctx.drawImage(cometImg, debris.x-debris.r, debris.y-debris.r, debris.r*2, debris.r*2);
-            ctx.restore();
-          } else if(debris.sat && satImg.complete && satImg.naturalWidth > 0) {
-            ctx.save();
-            ctx.globalAlpha = 0.98;
-            ctx.drawImage(satImg, debris.x-debris.r, debris.y-debris.r, debris.r*2, debris.r*2);
-            ctx.restore();
-          } else if(debris.alien && alienImg.complete && alienImg.naturalWidth > 0) {
-            ctx.save();
-            ctx.globalAlpha = 0.97;
-            ctx.translate(debris.x, debris.y);
-            ctx.rotate(debris.rot);
-            ctx.drawImage(alienImg, -debris.r, -debris.r, debris.r*2, debris.r*2);
-            ctx.restore();
-            debris.rot += debris.rotSpeed;
-          } else if(debris.comet) {
-            ctx.save();
-            ctx.globalAlpha = 0.77;
-            ctx.strokeStyle = '#fff';
-            ctx.beginPath(); ctx.arc(debris.x, debris.y, debris.r, 0, Math.PI*2); ctx.fillStyle='#c0f6ff'; ctx.fill();
-            ctx.stroke();
-            ctx.restore();
-          } else if(debris.sat) {
-            ctx.save();
-            ctx.globalAlpha = 0.85;
-            ctx.beginPath();
-            ctx.arc(debris.x, debris.y, debris.r, 0, Math.PI*2);
-            ctx.fillStyle = '#b88cff';
-            ctx.fill();
-            ctx.restore();
-          } else if(debris.alien) {
-            ctx.save();
-            ctx.globalAlpha = 0.8;
-            ctx.beginPath();
-            ctx.arc(debris.x, debris.y, debris.r, 0, Math.PI*2);
-            ctx.fillStyle = '#88ffaa';
-            ctx.fill();
-            ctx.restore();
-            debris.rot += debris.rotSpeed;
+        // Lasers hit hazard (comet, sat, alien): circle collision
+        for (let laser of lasers) {
+          for (let debris of hazards) {
+            if (debris.gone) continue;
+            if (debris.comet || debris.sat || debris.alien) {
+              let lrect = {x: laser.x-2, y: laser.y, w: laser.w, h: laser.h};
+              let ccirc = {x: debris.x, y: debris.y, r: debris.r};
+              if (isRectCircleColliding(lrect, ccirc)) {
+                explosions.push({x: debris.x, y: debris.y, start: performance.now(), duration: 350});
+                debris.gone = true;
+                laser.y = -110;
+                playSound('sfxExplosion');
+              }
+            }
           }
-          debris.y += debris.vy;
-          if(isCircleShipColliding(debris, player)) gameOver = true;
         }
-        hazards = hazards.filter(hz => hz.y < canvas.height+60);
+        hazards = hazards.filter(d => d.y < canvas.height+60 && !d.gone);
         // Draw explosions LAST so they're on top
         let now = performance.now();
         for (let i = explosions.length - 1; i >= 0; --i) {
@@ -481,7 +731,137 @@
       const alienImg = new Image();
       alienImg.src = 'assets/alien.png';
       alienImg.onerror = () => { console.error('Could not load alien image at: assets/alien.png'); };
+      cleanupCurrentGame = function(){
+        if (enemySpawnInt) clearInterval(enemySpawnInt);
+        if (hazardSpawnInt) clearInterval(hazardSpawnInt);
+        document.removeEventListener('keydown', keyHandlers.down);
+        document.removeEventListener('keyup', keyHandlers.up);
+        enemySpawnInt = null;
+        hazardSpawnInt = null;
+      };
       shipImg.onload = () => { gameLoop(); };
+    }
+    // Add score submit flow
+    async function submitScoreToContract(scoreSec) {
+      if (!userAddress || !contractInstance) throw new Error('Wallet not connected');
+      await ensureSomniaNetwork();
+      const centiSec = Math.round(scoreSec * 100);
+      try {
+        playBtn.innerText = "Submitting score...";
+        playBtn.disabled = true;
+        let tx = await contractInstance.submitScore(centiSec);
+        await tx.wait();
+        setTimeout(()=>{
+          alert('Score submitted! Your best: '+scoreSec.toFixed(2)+'s');
+        }, 200);
+      } catch (e) {
+        console.error("Score submit failed:", e);
+        alert('Failed to submit score! '+(e && e.message ? e.message : ''));
+      } finally {
+        playBtn.innerText = "PLAY AGAIN";
+        playBtn.disabled = false;
+      }
+    }
+    const goOverlay = document.getElementById('gameOverOverlay');
+    const goTime = document.getElementById('goTime');
+    const goLevel = document.getElementById('goLevel');
+    const goConnectBtn = document.getElementById('goConnectBtn');
+    const goSubmitBtn = document.getElementById('goSubmitBtn');
+    const goPlayAgainBtn = document.getElementById('goPlayAgainBtn');
+    const leaderboardBtn = document.getElementById('leaderboardBtn');
+    const leaderboardOverlay = document.getElementById('leaderboardOverlay');
+    const leaderboardList = document.getElementById('leaderboardList');
+    const leaderboardClose = document.getElementById('leaderboardClose');
+    function updateOverlayButtons() {
+      const hasMM = !!window.ethereum;
+      console.log('[Overlay] updateOverlayButtons - hasMetaMask?', hasMM, 'userAddress:', userAddress);
+      if (!hasMM) {
+        goConnectBtn.style.display = 'none';
+        goSubmitBtn.style.display = 'none';
+        return;
+      }
+      if (userAddress) {
+        goConnectBtn.style.display = 'none';
+        goSubmitBtn.style.display = 'block';
+        goSubmitBtn.disabled = false;
+        goSubmitBtn.innerText = 'Submit Score';
+      } else {
+        goConnectBtn.style.display = 'block';
+        goConnectBtn.disabled = false;
+        goConnectBtn.innerText = 'Connect Wallet to Submit';
+        goSubmitBtn.style.display = 'none';
+      }
+    }
+    goConnectBtn.onclick = async function(){
+      goConnectBtn.disabled = true;
+      goConnectBtn.innerText = 'Connecting...';
+      await connectWallet();
+      updateOverlayButtons();
+    };
+    goSubmitBtn.onclick = async function(){
+      if (!userAddress || !contractInstance) return;
+      goSubmitBtn.disabled = true;
+      goSubmitBtn.innerText = 'Submitting...';
+      try {
+        await submitScoreToContract(lastGameOverScore);
+        goSubmitBtn.innerText = 'Submitted!';
+      } catch(e) {
+        goSubmitBtn.innerText = 'Submit Score';
+        goSubmitBtn.disabled = false;
+        alert('Failed to submit: ' + (e.message || e));
+      }
+    };
+    goPlayAgainBtn.onclick = function(){
+      goOverlay.style.display = 'none';
+      if (currentShipImg) {
+        startGame(currentShipImg);
+      } else {
+        window.location.reload();
+      }
+    };
+    leaderboardBtn.onclick = async function(){
+      await showLeaderboard();
+    };
+    leaderboardClose.onclick = function(){
+      leaderboardOverlay.style.display = 'none';
+    };
+    async function showLeaderboard() {
+      try {
+        let lbContract;
+        if (contractInstance) {
+          lbContract = contractInstance;
+        } else {
+          lbContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, readonlyProvider);
+        }
+        const [addresses, scores] = await lbContract.getAllBestScores();
+        const entries = addresses.map((addr, idx) => ({
+          address: addr,
+          score: scores[idx] ? scores[idx].toNumber() : 0
+        })).filter(e => e.score > 0);
+        entries.sort((a,b)=>b.score - a.score);
+        const top = entries.slice(0,10);
+        leaderboardList.innerHTML = '';
+        if (!top.length) {
+          const li = document.createElement('li');
+          li.style.justifyContent = 'center';
+          li.innerText = 'No scores yet';
+          leaderboardList.appendChild(li);
+        } else {
+          top.forEach((entry, idx) => {
+            const li = document.createElement('li');
+            const left = document.createElement('span');
+            left.innerText = `${idx+1}. ${entry.address.substring(0,6)}...${entry.address.substring(entry.address.length-4)}`;
+            const right = document.createElement('span');
+            right.innerText = (entry.score/100).toFixed(2)+'s';
+            li.appendChild(left);
+            li.appendChild(right);
+            leaderboardList.appendChild(li);
+          });
+        }
+        leaderboardOverlay.style.display = 'flex';
+      } catch (err) {
+        alert('Failed to load leaderboard: '+(err.message||err));
+      }
     }
   </script>
 </body>
