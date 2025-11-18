@@ -94,6 +94,56 @@
       transform: scale(0.97);
       box-shadow: 0 0 10px #83ffd9bb;
     }
+    .control-scheme-selector {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      margin: 20px auto 0 auto;
+      max-width: 500px;
+    }
+    .control-option {
+      flex: 1;
+      padding: 12px 20px;
+      background: rgba(16, 32, 48, 0.6);
+      border: 2px solid #4a7a9a;
+      border-radius: 12px;
+      cursor: pointer;
+      text-align: center;
+      font-family: 'Orbitron', Arial, sans-serif;
+      font-size: 0.95em;
+      color: #a0d0ff;
+      transition: all 0.2s;
+    }
+    .control-option.selected {
+      border-color: #6ffeff;
+      background: rgba(46, 252, 255, 0.15);
+      box-shadow: 0 0 20px #91e6ff66;
+      color: #fff;
+    }
+    .control-option:hover {
+      border-color: #8ffeff;
+      background: rgba(46, 252, 255, 0.1);
+    }
+    .top-right-buttons {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      gap: 12px;
+      z-index: 200;
+    }
+    #leaderboardBtnTop {
+      padding: 10px 20px;
+      font-size: 0.95em;
+      margin: 0;
+      min-width: 140px;
+    }
+    #connectWalletBtnTop {
+      padding: 10px 20px;
+      font-size: 0.95em;
+      margin: 0;
+      min-width: 160px;
+    }
     #gameCanvas {
       position: absolute;
       left: 0; top: 0;
@@ -222,6 +272,11 @@
   <link href="https://fonts.googleapis.com/css?family=Orbitron:700&display=swap" rel="stylesheet">
 </head>
 <body>
+  <div class="top-right-buttons">
+    <button id="connectWalletBtnTop" class="play-btn">CONNECT METAMASK</button>
+    <button id="leaderboardBtnTop" class="play-btn">LEADERBOARD</button>
+  </div>
+  <div id="walletStatus" style="position:fixed;top:70px;right:20px;font-size:0.9em;color:#9cf;z-index:200;display:none;background:rgba(0,0,0,0.7);padding:8px 12px;border-radius:8px;"></div>
   <div class="menu">
     <div class="title">SPACE ESCAPE</div>
     <div class="subtitle">Select Your Spaceship</div>
@@ -230,10 +285,17 @@
       <div class="ship"><img src="assets/8.png" alt="Ship 8"></div>
       <div class="ship"><img src="assets/9.png" alt="Ship 9"></div>
     </div>
-    <button id="connectWalletBtn" class="play-btn" style="margin-bottom:18px;">CONNECT METAMASK</button>
-    <div id="walletStatus" style="text-align:center;font-size:1.05em;color:#9cf;padding-bottom:10px;display:none"></div>
-    <button id="leaderboardBtn" class="play-btn" style="margin-top:0;margin-bottom:12px;">LEADERBOARD</button>
-    <button id="playBtn" class="play-btn" style="display:none;opacity:0.45;pointer-events:none;">PLAY</button>
+    <div class="control-scheme-selector" style="margin-top:30px;">
+      <div class="control-option selected" data-scheme="arrows" id="controlArrows">
+        <div style="font-weight:bold;margin-bottom:4px;">Arrow Keys</div>
+        <div style="font-size:0.85em;opacity:0.8;">↑↓←→ Move, Space Shoot</div>
+      </div>
+      <div class="control-option" data-scheme="wasd" id="controlWASD">
+        <div style="font-weight:bold;margin-bottom:4px;">WASD</div>
+        <div style="font-size:0.85em;opacity:0.8;">WASD Move, Space Shoot</div>
+      </div>
+    </div>
+    <button id="playBtn" class="play-btn" style="margin-top:30px;display:none;opacity:0.45;pointer-events:none;">PLAY</button>
   </div>
   <canvas id="gameCanvas"></canvas>
   <div id="gameOverOverlay">
@@ -253,88 +315,346 @@
       <button id="leaderboardClose">Close</button>
     </div>
   </div>
-  <!-- Speaker Toggle Icon -->
-  <div id="speakerToggle" style="position: absolute; top: 32px; right: 38px; z-index: 300; cursor:pointer">
-    <svg id="speakerIconOn" width="38" height="38" viewBox="0 0 38 38" fill="none" style="display:block"><rect x="0" y="0" width="38" height="38" rx="19" fill="#233445"/><path d="M10 24h5l6 4V10l-6 4h-5v10Z" fill="#a6fcff" stroke="#72d9e9" stroke-width="2.5"/><path d="M26 14c1.7 2.1 1.7 7.9 0 10" stroke="#78fcff" stroke-width="2.5"/><path d="M30 11c3.29 4.35 3.29 13.65 0 18" stroke="#78fcff" stroke-width="2.5"/></svg>
-    <svg id="speakerIconOff" width="38" height="38" viewBox="0 0 38 38" fill="none" style="display:none"><rect x="0" y="0" width="38" height="38" rx="19" fill="#224"/><path d="M10 24h5l6 4V10l-6 4h-5v10Z" fill="#bbb" stroke="#8888aa" stroke-width="2.5"/><path d="M30 11l-13 16M30 27L17 11" stroke="#e5556a" stroke-width="2.5"/></svg>
+  <!-- Mute Toggle Button -->
+  <div id="muteToggle" style="position: fixed; bottom: 20px; left: 20px; z-index: 200; cursor: pointer; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 8px; border: 2px solid #49f3fb;">
+    <span id="muteIcon" style="font-size: 24px; color: #49f3fb;">🔊</span>
   </div>
-  <!-- Audio files (replace URLs with your own for custom fx) -->
-  <audio id="sfxLaser" src="https://cdn.pixabay.com/audio/2022/09/27/audio_12c3c5b256.mp3" preload="auto"></audio>
-  <audio id="sfxExplosion" src="https://cdn.pixabay.com/audio/2022/03/15/audio_121b1c8dcb.mp3" preload="auto"></audio>
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
   <script>
     let muted = false;
-    const speakerToggle = document.getElementById('speakerToggle');
-    const iconOn = document.getElementById('speakerIconOn');
-    const iconOff = document.getElementById('speakerIconOff');
-    speakerToggle.onclick = function() {
-      muted = !muted;
-      iconOn.style.display = muted ? 'none' : 'block';
-      iconOff.style.display = muted ? 'block' : 'none';
-    };
-    function playSound(id) {
-      if (muted) return;
-      let el = document.getElementById(id);
-      if (el) { el.currentTime = 0; el.play(); }
-    }
-    // --- Menu Ship Selection ---
-    const ships = document.querySelectorAll('.ship');
-    const playBtn = document.getElementById('playBtn');
+    let currentShipImg = null;
     let selectedShipImg = '';
-    ships.forEach((ship) => {
-      ship.addEventListener('click', () => {
-        ships.forEach(s => s.classList.remove('selected'));
-        ship.classList.add('selected');
-        const imgElem = ship.querySelector('img');
-        selectedShipImg = imgElem.getAttribute('src');
-        playBtn.style.display = 'block';
-      });
+    let controlScheme = localStorage.getItem('spaceEscapeControls') || 'arrows';
+    
+    // Web Audio API for sound generation
+    let audioContext = null;
+    let audioInitialized = false;
+    try {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    } catch (e) {
+      console.warn('Web Audio API not supported');
+    }
+    
+    // Resume audio context on first user interaction (required by some browsers)
+    function initAudio() {
+      if (audioContext && audioContext.state === 'suspended') {
+        audioContext.resume().then(() => {
+          audioInitialized = true;
+        }).catch(e => {
+          console.warn('Could not resume audio context:', e);
+        });
+      } else if (audioContext) {
+        audioInitialized = true;
+      }
+    }
+    
+    // Initialize audio on any user interaction
+    ['click', 'keydown', 'touchstart'].forEach(event => {
+      document.addEventListener(event, initAudio, { once: true });
     });
-    playBtn.addEventListener('click', () => {
-      document.querySelector('.menu').style.display = 'none';
-      const gameCanvas = document.getElementById('gameCanvas');
-      gameCanvas.style.display = 'block';
-      currentShipImg = selectedShipImg;
-      startGame(selectedShipImg);
+    
+    function playSound(type) {
+      if (muted || !audioContext) return;
+      
+      // Try to resume if suspended
+      if (audioContext.state === 'suspended') {
+        audioContext.resume();
+      }
+      
+      try {
+        const now = audioContext.currentTime;
+        
+        if (type === 'sfxLaser') {
+          // Player laser sound - high pitched beep
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+          
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          
+          oscillator.frequency.setValueAtTime(800, now);
+          oscillator.frequency.exponentialRampToValueAtTime(200, now + 0.1);
+          oscillator.type = 'sine';
+          
+          gainNode.gain.setValueAtTime(0.3, now);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+          
+          oscillator.start(now);
+          oscillator.stop(now + 0.1);
+          
+        } else if (type === 'sfxExplosion') {
+          // Explosion sound - deep rumble
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+          const filter = audioContext.createBiquadFilter();
+          
+          oscillator.connect(filter);
+          filter.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          
+          filter.type = 'lowpass';
+          filter.frequency.setValueAtTime(200, now);
+          
+          oscillator.frequency.setValueAtTime(100, now);
+          oscillator.frequency.exponentialRampToValueAtTime(50, now + 0.3);
+          oscillator.type = 'sawtooth';
+          
+          gainNode.gain.setValueAtTime(0.4, now);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+          
+          oscillator.start(now);
+          oscillator.stop(now + 0.3);
+          
+        } else if (type === 'sfxEnemyShoot') {
+          // Enemy bullet sound - lower pitch than player
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+          
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          
+          oscillator.frequency.setValueAtTime(400, now);
+          oscillator.frequency.exponentialRampToValueAtTime(150, now + 0.08);
+          oscillator.type = 'square';
+          
+          gainNode.gain.setValueAtTime(0.2, now);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+          
+          oscillator.start(now);
+          oscillator.stop(now + 0.08);
+          
+        } else if (type === 'sfxPowerUp') {
+          // Power-up collection - ascending chime
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+          
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          
+          oscillator.frequency.setValueAtTime(400, now);
+          oscillator.frequency.linearRampToValueAtTime(800, now + 0.15);
+          oscillator.type = 'sine';
+          
+          gainNode.gain.setValueAtTime(0.3, now);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+          
+          oscillator.start(now);
+          oscillator.stop(now + 0.15);
+          
+        } else if (type === 'sfxShield') {
+          // Shield hit - metallic ping
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+          const filter = audioContext.createBiquadFilter();
+          
+          oscillator.connect(filter);
+          filter.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          
+          filter.type = 'bandpass';
+          filter.frequency.setValueAtTime(1000, now);
+          filter.Q.setValueAtTime(10, now);
+          
+          oscillator.frequency.setValueAtTime(600, now);
+          oscillator.frequency.exponentialRampToValueAtTime(1200, now + 0.2);
+          oscillator.type = 'sine';
+          
+          gainNode.gain.setValueAtTime(0.25, now);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+          
+          oscillator.start(now);
+          oscillator.stop(now + 0.2);
+          
+        } else if (type === 'sfxLevelUp') {
+          // Level up - triumphant chord
+          for (let i = 0; i < 3; i++) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            const freq = 400 + (i * 200);
+            oscillator.frequency.setValueAtTime(freq, now + (i * 0.1));
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.2, now + (i * 0.1));
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.4 + (i * 0.1));
+            
+            oscillator.start(now + (i * 0.1));
+            oscillator.stop(now + 0.4 + (i * 0.1));
+          }
+        }
+      } catch (e) {
+        console.warn('Error playing sound:', e);
+      }
+    }
+    
+    // Initialize mute toggle
+    document.addEventListener('DOMContentLoaded', function() {
+      const muteToggle = document.getElementById('muteToggle');
+      const muteIcon = document.getElementById('muteIcon');
+      if (muteToggle && muteIcon) {
+        muteToggle.onclick = function() {
+          muted = !muted;
+          muteIcon.textContent = muted ? '🔇' : '🔊';
+          muteIcon.style.color = muted ? '#888' : '#49f3fb';
+        };
+      }
+    });
+    
+    // Initialize when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+      try {
+        // --- Menu Ship Selection ---
+        const ships = document.querySelectorAll('.ship');
+        const playBtn = document.getElementById('playBtn');
+        if (!playBtn) {
+          console.error('Play button not found!');
+          return;
+        }
+        
+        ships.forEach((ship) => {
+          ship.addEventListener('click', () => {
+            ships.forEach(s => s.classList.remove('selected'));
+            ship.classList.add('selected');
+            const imgElem = ship.querySelector('img');
+            if (imgElem) {
+              selectedShipImg = imgElem.getAttribute('src');
+              if (playBtn) {
+                playBtn.style.display = 'block';
+                playBtn.style.opacity = '1';
+                playBtn.style.pointerEvents = 'auto';
+              }
+            }
+          });
+        });
+        
+        if (playBtn) {
+          playBtn.addEventListener('click', () => {
+            if (!selectedShipImg) {
+              alert('Please select a spaceship first!');
+              return;
+            }
+            document.querySelector('.menu').style.display = 'none';
+            const gameCanvas = document.getElementById('gameCanvas');
+            if (gameCanvas) {
+              gameCanvas.style.display = 'block';
+              currentShipImg = selectedShipImg;
+              startGame(selectedShipImg);
+            }
+          });
+        }
+
+        // Control Scheme Selection
+        const controlArrows = document.getElementById('controlArrows');
+        const controlWASD = document.getElementById('controlWASD');
+        if (controlArrows && controlWASD) {
+          [controlArrows, controlWASD].forEach(opt => {
+            opt.addEventListener('click', function() {
+              [controlArrows, controlWASD].forEach(o => o.classList.remove('selected'));
+              this.classList.add('selected');
+              controlScheme = this.dataset.scheme;
+              localStorage.setItem('spaceEscapeControls', controlScheme);
+            });
+          });
+          if (controlScheme === 'wasd') {
+            controlWASD.classList.add('selected');
+            controlArrows.classList.remove('selected');
+          }
+        }
+        // Initialize wallet connection buttons
+        connectBtn = document.getElementById('connectWalletBtnTop');
+        walletStatus = document.getElementById('walletStatus');
+        
+        if (connectBtn) {
+          connectBtn.onclick = async function() {
+            try {
+              await connectWallet();
+              if (userAddress) await getContract();
+            } catch (e) {
+              console.error('Connect wallet error:', e);
+              if (walletStatus) {
+                walletStatus.innerText = 'Error: ' + (e.message || e);
+                walletStatus.style.display = 'block';
+              }
+            }
+          };
+        } else {
+          console.error('Connect wallet button not found!');
+        }
+        
+        // Initialize leaderboard button
+        const leaderboardBtn = document.getElementById('leaderboardBtnTop');
+        const leaderboardOverlay = document.getElementById('leaderboardOverlay');
+        const leaderboardList = document.getElementById('leaderboardList');
+        const leaderboardClose = document.getElementById('leaderboardClose');
+        if (leaderboardBtn && leaderboardOverlay) {
+          leaderboardBtn.onclick = async function(){
+            await showLeaderboard();
+          };
+          if (leaderboardClose) {
+            leaderboardClose.onclick = function(){
+              leaderboardOverlay.style.display = 'none';
+            };
+          }
+        }
+        
+      } catch (e) {
+        console.error('Error initializing menu:', e);
+      }
     });
 
     let userAddress = null;
-    const connectBtn = document.getElementById('connectWalletBtn');
-    const walletStatus = document.getElementById('walletStatus');
+    
     // MetaMask connect logic
     async function connectWallet() {
       console.log('[Wallet] connectWallet called');
       if (!window.ethereum) {
-        walletStatus.innerText = 'MetaMask not detected. Please install MetaMask.';
-        walletStatus.style.display = 'block';
-        connectBtn.style.display = 'block';
-        if (goConnectBtn) {
+        if (walletStatus) {
+          walletStatus.innerText = 'MetaMask not detected. Please install MetaMask.';
+          walletStatus.style.display = 'block';
+        }
+        if (connectBtn) connectBtn.style.display = 'block';
+        if (typeof goConnectBtn !== 'undefined' && goConnectBtn) {
           goConnectBtn.disabled = false;
           goConnectBtn.innerText = 'MetaMask Required';
         }
-        updateOverlayButtons();
+        if (typeof updateOverlayButtons === 'function') updateOverlayButtons();
         return;
       }
       try {
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         console.log('[Wallet] Accounts returned:', accounts);
-        userAddress = accounts[0];
-        walletStatus.innerText = 'Connected: ' + userAddress.substring(0,6) + '...' + userAddress.substring(userAddress.length-4);
-        walletStatus.style.display = 'block';
-        connectBtn.style.display = 'none';
-        playBtn.style.opacity = '1';
-        playBtn.style.pointerEvents = 'auto';
-        await getContract();
+        if (accounts && accounts[0]) {
+          userAddress = accounts[0];
+          if (walletStatus) {
+            walletStatus.innerText = 'Connected: ' + userAddress.substring(0,6) + '...' + userAddress.substring(userAddress.length-4);
+            walletStatus.style.display = 'block';
+          }
+          if (connectBtn) connectBtn.style.display = 'none';
+          // Try to set up contract, but don't fail if network switch is rejected
+          try {
+            await getContract();
+          } catch (contractErr) {
+            console.warn('[Wallet] Contract setup failed (network switch may have been rejected):', contractErr);
+            if (walletStatus) {
+              walletStatus.innerText = 'Connected: ' + userAddress.substring(0,6) + '...' + userAddress.substring(userAddress.length-4) + ' (Switch to Somnia to submit scores)';
+            }
+          }
+        }
       } catch (err) {
         console.warn('[Wallet] Connection rejected or failed:', err);
-        walletStatus.innerText = err && err.message ? err.message : 'Connection rejected.';
-        walletStatus.style.display = 'block';
+        if (walletStatus) {
+          walletStatus.innerText = err && err.message ? err.message : 'Connection rejected.';
+          walletStatus.style.display = 'block';
+        }
       } finally {
-        if (goConnectBtn) {
+        if (typeof goConnectBtn !== 'undefined' && goConnectBtn) {
           goConnectBtn.disabled = false;
           goConnectBtn.innerText = 'Connect Wallet to Submit';
         }
-        updateOverlayButtons();
+        if (typeof updateOverlayButtons === 'function') updateOverlayButtons();
       }
     }
     // --- Smart contract integration ---
@@ -368,7 +688,6 @@
     let contractInstance = null, provider = null;
     let lastGameOverScore = 0;
     let readonlyProvider = new ethers.providers.JsonRpcProvider(SOMNIA_PARAMS.rpcUrls[0]);
-    let currentShipImg = null;
     let cleanupCurrentGame = null;
 
     async function ensureSomniaNetwork() {
@@ -398,26 +717,25 @@
       const signer = provider.getSigner();
       contractInstance = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
     }
-    connectBtn.onclick = async function() {
-      await connectWallet();
-      if (userAddress) await getContract();
-    };
-    // On page load, try autoconnect if already authorized
-    window.addEventListener('DOMContentLoaded', async ()=> {
-      if (window.ethereum && window.ethereum.selectedAddress) {
-        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-        if (accounts[0]) {
-          userAddress = accounts[0];
-          walletStatus.innerText = 'Connected: ' + userAddress.substring(0,6) + '...' + userAddress.substring(userAddress.length-4);
-          walletStatus.style.display = 'block';
-          connectBtn.style.display = 'none';
-          playBtn.style.opacity = '1';
-          playBtn.style.pointerEvents = 'auto';
-          await getContract();
-          updateOverlayButtons();
+    
+    // On page load, try autoconnect if already authorized (runs after main DOMContentLoaded)
+    setTimeout(async () => {
+      if (window.ethereum && window.ethereum.selectedAddress && connectBtn && walletStatus) {
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+          if (accounts[0]) {
+            userAddress = accounts[0];
+            walletStatus.innerText = 'Connected: ' + userAddress.substring(0,6) + '...' + userAddress.substring(userAddress.length-4);
+            walletStatus.style.display = 'block';
+            connectBtn.style.display = 'none';
+            await getContract();
+            if (typeof updateOverlayButtons === 'function') updateOverlayButtons();
+          }
+        } catch (e) {
+          console.warn('Auto-connect failed:', e);
         }
       }
-    });
+    }, 100);
 
     // ---- SPACE ESCAPE GAME CORE ----
     function startGame(shipImgSrc) {
@@ -482,16 +800,20 @@
       let canShoot = true;
       let shootInterval;
       function shoot() {
+        const currentTime = Date.now();
+        const hasRapidFire = activePowerUps.rapidFire > currentTime;
+        const hasTripleShot = activePowerUps.tripleShot > currentTime;
+        const cooldown = hasRapidFire ? 60 : 120;
         if (canShoot) {
-          lasers.push({
-            x: player.x,
-            y: player.y - 40,
-            w: 5,
-            h: 20,
-            color: '#fffd30',
-          });
+          if (hasTripleShot) {
+            lasers.push({ x: player.x - 15, y: player.y - 40, w: 5, h: 20, color: '#fffd30' });
+            lasers.push({ x: player.x, y: player.y - 40, w: 5, h: 20, color: '#fffd30' });
+            lasers.push({ x: player.x + 15, y: player.y - 40, w: 5, h: 20, color: '#fffd30' });
+          } else {
+            lasers.push({ x: player.x, y: player.y - 40, w: 5, h: 20, color: '#fffd30' });
+          }
           canShoot = false;
-          shootInterval = setTimeout(() => canShoot = true, 120);
+          shootInterval = setTimeout(() => canShoot = true, cooldown);
           playSound('sfxLaser');
         }
       }
@@ -499,6 +821,7 @@
       // Enemies - use adjustable speed/spawn for scaling
       let enemySpeed = 1.8;
       let enemySpawnRate = 1200;
+      let enemyBullets = [];
       function spawnEnemy() {
         enemies.push({
           x: Math.random() * (canvas.width-46) + 23,
@@ -506,7 +829,9 @@
           w: 50,
           h: 50,
           vy: enemySpeed + Math.random()*0.8,
-          alive: true
+          alive: true,
+          lastShot: Date.now() - 1000, // Start with some time already passed so they shoot sooner
+          shootCooldown: 1500 + Math.random() * 1000
         });
       }
       // Enemy spawner: always clear interval first, even if not set
@@ -515,6 +840,24 @@
         enemySpawnInt = setInterval(spawnEnemy, enemySpawnRate);
       }
       setEnemySpawner();
+
+      // Power-ups
+      let powerUps = [];
+      let activePowerUps = {
+        shield: 0,
+        rapidFire: 0,
+        tripleShot: 0
+      };
+      function dropPowerUp(x, y) {
+        const type = Math.random();
+        if (type < 0.4) {
+          powerUps.push({ x, y, w: 40, h: 40, type: 'shield', color: '#00ffff', collected: false });
+        } else if (type < 0.7) {
+          powerUps.push({ x, y, w: 40, h: 40, type: 'rapidFire', color: '#ffff00', collected: false });
+        } else {
+          powerUps.push({ x, y, w: 40, h: 40, type: 'tripleShot', color: '#ff00ff', collected: false });
+        }
+      }
 
       // Space debris/asteroids/comets
       let hazards = [];
@@ -637,10 +980,28 @@
         ctx.textAlign = 'left';
         ctx.fillText('Time Survived: '+timeSurvived.toFixed(1)+'s', 28, 44);
         ctx.fillText('Level: '+level, 28, 72);
+        // Power-up status
+        const currentTime = Date.now();
+        let puY = 100;
+        if (activePowerUps.shield > currentTime) {
+          ctx.fillStyle = '#00ffff';
+          ctx.fillText('🛡️ Shield', 28, puY);
+          puY += 28;
+        }
+        if (activePowerUps.rapidFire > currentTime) {
+          ctx.fillStyle = '#ffff00';
+          ctx.fillText('⚡ Rapid Fire', 28, puY);
+          puY += 28;
+        }
+        if (activePowerUps.tripleShot > currentTime) {
+          ctx.fillStyle = '#ff00ff';
+          ctx.fillText('💥 Triple Shot', 28, puY);
+        }
         ctx.restore();
         // Difficulty scaling
         if (timeSurvived*1000 > level*nextLevelTime) {
           level++;
+          playSound('sfxLevelUp');
           enemySpeed += 0.58;
           hazardSpeed += 0.51;
           enemySpawnRate = Math.max(340, enemySpawnRate-160);
@@ -649,10 +1010,17 @@
           setHazardSpawner();
         }
         // Clamp movement so ship cannot leave visible area
-        if (keys['ArrowLeft']) player.x = Math.max(player.x - player.speed, player.w/2);
-        if (keys['ArrowRight']) player.x = Math.min(player.x + player.speed, canvas.width - player.w/2);
-        if (keys['ArrowUp']) player.y = Math.max(player.y - player.speed, player.h/2);
-        if (keys['ArrowDown']) player.y = Math.min(player.y + player.speed, canvas.height - player.h/2);
+        if (controlScheme === 'wasd') {
+          if (keys['KeyA']) player.x = Math.max(player.x - player.speed, player.w/2);
+          if (keys['KeyD']) player.x = Math.min(player.x + player.speed, canvas.width - player.w/2);
+          if (keys['KeyW']) player.y = Math.max(player.y - player.speed, player.h/2);
+          if (keys['KeyS']) player.y = Math.min(player.y + player.speed, canvas.height - player.h/2);
+        } else {
+          if (keys['ArrowLeft']) player.x = Math.max(player.x - player.speed, player.w/2);
+          if (keys['ArrowRight']) player.x = Math.min(player.x + player.speed, canvas.width - player.w/2);
+          if (keys['ArrowUp']) player.y = Math.max(player.y - player.speed, player.h/2);
+          if (keys['ArrowDown']) player.y = Math.min(player.y + player.speed, canvas.height - player.h/2);
+        }
         if (keys['Space']) shoot();
         ctx.drawImage(player.img, player.x-player.w/2, player.y-player.h/2, player.w, player.h);
         // Lasers
@@ -665,11 +1033,53 @@
           if (!enemy.alive) continue;
           ctx.drawImage(enemyImg, enemy.x-enemy.w/2, enemy.y-enemy.h/2, enemy.w, enemy.h);
           enemy.y += enemy.vy;
+          // Enemy shooting
+          if (Date.now() - enemy.lastShot > enemy.shootCooldown && enemy.y > 50 && enemy.y < canvas.height - 100) {
+            enemyBullets.push({ x: enemy.x, y: enemy.y + enemy.h/2, w: 6, h: 16, vy: 5 + Math.random()*2, color: '#ff0000' });
+            enemy.lastShot = Date.now();
+            enemy.shootCooldown = 1500 + Math.random() * 1000;
+            playSound('sfxEnemyShoot');
+          }
           if(isColliding(
             {x: player.x-player.w/2, y: player.y-player.h/2, w: player.w, h: player.h},
             {x: enemy.x-enemy.w/2, y: enemy.y-enemy.h/2, w: enemy.w, h: enemy.h}
-          )) { gameOver = true; }
+          )) { 
+            const currentTime = Date.now();
+            if (activePowerUps.shield > currentTime) {
+              activePowerUps.shield = 0; // Shield absorbs one hit
+              playSound('sfxShield');
+            } else {
+              gameOver = true;
+            }
+          }
         }
+        // Enemy bullets
+        for (let bullet of enemyBullets) {
+          ctx.save();
+          ctx.fillStyle = bullet.color;
+          ctx.fillRect(bullet.x-3, bullet.y, bullet.w, bullet.h);
+          // Add glow effect
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = '#ff0000';
+          ctx.fillRect(bullet.x-3, bullet.y, bullet.w, bullet.h);
+          ctx.restore();
+          bullet.y += bullet.vy;
+          // Collision with player
+          if (isColliding(
+            {x: player.x-player.w/2, y: player.y-player.h/2, w: player.w, h: player.h},
+            {x: bullet.x-3, y: bullet.y, w: bullet.w, h: bullet.h}
+          )) {
+            const currentTime = Date.now();
+            if (activePowerUps.shield > currentTime) {
+              activePowerUps.shield = 0; // Shield absorbs one hit
+              playSound('sfxShield');
+            } else {
+              gameOver = true;
+            }
+            bullet.y = canvas.height + 100;
+          }
+        }
+        enemyBullets = enemyBullets.filter(b => b.y < canvas.height + 50);
         // Lasers hit enemy ships
         for (let laser of lasers) { for (let enemy of enemies) {
             if (!enemy.alive) continue;
@@ -681,6 +1091,10 @@
               enemy.alive = false;
               laser.y = -100;
               playSound('sfxExplosion');
+              // Chance to drop power-up (50%)
+              if (Math.random() < 0.5) {
+                dropPowerUp(enemy.x, enemy.y);
+              }
             }
         }}
         enemies = enemies.filter(e => e.y < canvas.height+22 && e.alive);
@@ -701,6 +1115,60 @@
           }
         }
         hazards = hazards.filter(d => d.y < canvas.height+60 && !d.gone);
+        // Power-ups
+        for (let pu of powerUps) {
+          if (pu.collected) continue;
+          // Draw power-up with pulsing effect
+          ctx.save();
+          const pulse = Math.sin(Date.now() / 200) * 0.2 + 0.8;
+          ctx.globalAlpha = pulse;
+          // Add glow effect
+          ctx.shadowBlur = 15;
+          ctx.shadowColor = pu.color;
+          ctx.fillStyle = pu.color;
+          ctx.beginPath();
+          ctx.arc(pu.x, pu.y, pu.w/2, 0, Math.PI*2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 3;
+          ctx.stroke();
+          ctx.restore();
+          pu.y += 2;
+          // Collection
+          if (isColliding(
+            {x: player.x-player.w/2, y: player.y-player.h/2, w: player.w, h: player.h},
+            {x: pu.x-pu.w/2, y: pu.y-pu.h/2, w: pu.w, h: pu.h}
+          )) {
+            pu.collected = true;
+            playSound('sfxPowerUp');
+            if (pu.type === 'shield') {
+              activePowerUps.shield = Date.now() + 10000; // 10 seconds
+            } else if (pu.type === 'rapidFire') {
+              activePowerUps.rapidFire = Date.now() + 8000; // 8 seconds
+            } else if (pu.type === 'tripleShot') {
+              activePowerUps.tripleShot = Date.now() + 12000; // 12 seconds
+            }
+          }
+        }
+        powerUps = powerUps.filter(pu => pu.y < canvas.height + 50 && !pu.collected);
+        // Update power-up timers
+        const nowTime = Date.now();
+        if (activePowerUps.shield > 0 && activePowerUps.shield < nowTime) activePowerUps.shield = 0;
+        if (activePowerUps.rapidFire > 0 && activePowerUps.rapidFire < nowTime) activePowerUps.rapidFire = 0;
+        if (activePowerUps.tripleShot > 0 && activePowerUps.tripleShot < nowTime) activePowerUps.tripleShot = 0;
+        // Draw shield effect
+        const shieldTime = Date.now();
+        if (activePowerUps.shield > shieldTime) {
+          ctx.save();
+          ctx.globalAlpha = 0.4;
+          ctx.strokeStyle = '#00ffff';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(player.x, player.y, player.w/2 + 8, 0, Math.PI*2);
+          ctx.stroke();
+          ctx.restore();
+        }
         // Draw explosions LAST so they're on top
         let now = performance.now();
         for (let i = explosions.length - 1; i >= 0; --i) {
@@ -768,7 +1236,7 @@
     const goConnectBtn = document.getElementById('goConnectBtn');
     const goSubmitBtn = document.getElementById('goSubmitBtn');
     const goPlayAgainBtn = document.getElementById('goPlayAgainBtn');
-    const leaderboardBtn = document.getElementById('leaderboardBtn');
+    const leaderboardBtn = document.getElementById('leaderboardBtnTop');
     const leaderboardOverlay = document.getElementById('leaderboardOverlay');
     const leaderboardList = document.getElementById('leaderboardList');
     const leaderboardClose = document.getElementById('leaderboardClose');
